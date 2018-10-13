@@ -20,7 +20,7 @@ class HouseHue():
 
     def setFrontDoor(self, state, bri):
         try:
-            command =  {'transitiontime' : 10, 'on' : state, 'bri' : bri}
+            command =  {'transitiontime' : 0, 'on' : state, 'bri' : bri}
             self.b.set_light('Front Door', command)
         except:
             pass

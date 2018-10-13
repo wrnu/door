@@ -49,8 +49,9 @@ def unlock():
     state = hue_bridge.getFrontDoorState()
     hue_bridge.setFrontDoor(not state.get('on'), state.get('bri'))
     GPIO.output(DOOR, UNLOCK)
+    sleep(0.5)
     hue_bridge.setFrontDoor(state.get('on'), state.get('bri'))
-    sleep(5)
+    sleep(4.5)
     GPIO.output(DOOR, LOCK)
 
 def cleanup():
