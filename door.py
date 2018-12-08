@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import fb
 import sys
 import sheets
 import signal
@@ -7,6 +8,7 @@ import RPi.GPIO as GPIO
 import SimpleMFRC522
 from time import sleep
 from datetime import datetime as dt
+from thread import start_new_thread
 
 DOOR    = 3
 LOCK    = 1
@@ -53,7 +55,13 @@ def print_status(status, fob_id, fob_desc):
     print("{}: {} {} - {}".format(dt.now().isoformat(), status, fob_id, fob_desc))
     sys.stdout.flush()
 
-def main():
+def firebase():
+    while True:
+        if fb.get_action().get('unlock'):
+            unlock()
+        sleep(2)
+
+def rfid():
     fs = init()
     while True:
         fob_id, _ = reader.read()
@@ -68,6 +76,10 @@ def main():
             else:
                 print_status('ERROR', fob_id, 'Unkown ID')
                 sys.stdout.flush()
+
+def main():
+    start_new_thread(firebase, ())
+    start_new_thread(rfid, ())
 
 if __name__== "__main__":
     killer = GracefulKiller()
