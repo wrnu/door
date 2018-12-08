@@ -8,12 +8,15 @@ initialize_app(cred)
 
 frontdoor = firestore.client().collection('frontdoor')
 
-def get_status():
-    return frontdoor.document('status').get().to_dict()
+def get_locked():
+    return frontdoor.document('status').get().to_dict().get('locked')
 
-def set_action(a):
-    unlock = False
-    if a == 'unlock':
-        unlock = True
-    frontdoor.document('action').set({'unlock': unlock}) 
+def set_locked(s):
+    frontdoor.document('action').set({'locked': s}) 
+
+def get_unlock(u):
+    return frontdoor.document('action').get().to_dict().get('unlock')
+
+def set_unlock(u):
+    frontdoor.document('action').set({'unlock': u}) 
 

@@ -65,9 +65,11 @@ def print_status(status, fob_id, fob_desc):
 
 def firebase():
     while True:
-        if fb.get_action().get('unlock'):
+        if fb.get_unlock():
+            fb.set_locked(False)
             unlock()
-        sleep(2)
+            fb.set_locked(True)
+        sleep(5)
 
 def rfid():
     fs = init()
@@ -75,12 +77,16 @@ def rfid():
         fob_id, _ = reader.read()
         if fob_id in fobs.keys():
             print_status('SUCCESS', fob_id, fobs.get(fob_id))
+            fb.set_locked(False)
             unlock()
+            fb.set_locked(True)
         else:
             row = fs.getByID(str(fob_id))
             if row:
                 print_status('SUCCESS', row[0], row[1])
+                fb.set_locked(False)
                 unlock()
+                fb.set_locked(True)
             else:
                 print_status('ERROR', fob_id, 'Unkown ID')
                 sys.stdout.flush()
