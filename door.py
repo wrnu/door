@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import fb
+import hue
 import sys
 import sheets
 import signal
@@ -13,6 +14,7 @@ from thread import start_new_thread
 DOOR    = 3
 LOCK    = 1
 UNLOCK  = 0
+HUE_IP  ='192.168.1.103'
 
 fobs = {
     437722577338:   "Blue Fob",
@@ -24,6 +26,7 @@ fobs = {
 }
 
 reader = SimpleMFRC522.SimpleMFRC522()
+hue_bridge  = hue.HouseHue(HUE_IP)
 
 class GracefulKiller:
     def __init__(self):
@@ -44,8 +47,13 @@ def init():
     return fs
 
 def unlock():
+    hue_bridge.connect()
+    state = hue_bridge.getFrontDoorState()
+    hue_bridge.setFrontDoor(not state.get('on'), state.get('bri'))
     GPIO.output(DOOR, UNLOCK)
-    sleep(5)
+    sleep(0.5)
+    hue_bridge.setFrontDoor(state.get('on'), state.get('bri'))
+    sleep(4.5)
     GPIO.output(DOOR, LOCK)
 
 def cleanup():
