@@ -88,6 +88,8 @@ def rfid():
 def main():
     start_new_thread(firebase, ())
     start_new_thread(rfid, ())
+    while True
+        sleep(10)
 
 if __name__== "__main__":
     killer = GracefulKiller()
