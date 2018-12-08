@@ -16,6 +16,9 @@ HUE_IP  ='192.168.1.103'
 
 fobs = {
     437722577338:   "Blue Fob",
+    584188564421:   "Kevin's Visa",
+    412213325151:   "Dylan's Debit",
+    549014381766:   "Aaron's Visa",
     683219655431:   "Joe's ScotiaCard",
     584189237183:   "Jolie's Compass Card",
     584191278450:   "Georgie's Compass Card",
