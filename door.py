@@ -1,15 +1,23 @@
 #!/usr/bin/env python
 
-import fb
 import hue
 import sys
 import sheets
 import signal
 import RPi.GPIO as GPIO
 import SimpleMFRC522
+import logging
+import traceback
 from time import sleep
 from datetime import datetime as dt
 from thread import start_new_thread
+from fb import FirebaseDoor
+
+logging.basicConfig(level=logging.WARNING)
+log = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
 
 DOOR    = 3
 LOCK    = 1
@@ -40,14 +48,11 @@ class GracefulKiller:
         cleanup()
         sys.exit(0)
 
-def init():
+def gpio_init():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DOOR, GPIO.OUT)
     GPIO.output(DOOR, LOCK)
-
-    fs = sheets.FOBSheet()
-    return fs
 
 def unlock():
     hue_bridge.connect()
@@ -62,50 +67,68 @@ def unlock():
 def cleanup():
     GPIO.cleanup()
 
-def print_status(status, fob_id, fob_desc):
-    print("{}: {} {} - {}".format(dt.now().isoformat(), status, fob_id, fob_desc))
-    sys.stdout.flush()
+def log_status(status, fob_id, fob_desc):
+    log.warning("{}: {} - {}".format(status, fob_id, fob_desc))
 
-def firebase():
-    while True:
-        if fb.get_unlock():
-            fb.set_locked(False)
-            unlock()
-            fb.set_locked(True)
-        sleep(5)
+def firebase(fb):
+    try:
+        log.info("Starting Firebase Process")
+        while True:
+            if fb.get_unlock():
+                log_status("UNLOCK", "Firebase action", "USER_ID")
+                fb.set_unlock(False)
+                fb.set_locked(False)
+                unlock()
+                fb.set_locked(True)
+            sleep(5)
+    except Exception as e:
+        log.error(str(e), exec_info=True)
 
-def rfid():
-    fs = init()
-    while True:
-        fob_id, _ = reader.read()
-        if fob_id in fobs.keys():
-            print_status('SUCCESS', fob_id, fobs.get(fob_id))
-            fb.set_locked(False)
-            unlock()
-            fb.set_locked(True)
-        else:
-            row = fs.getByID(str(fob_id))
-            if row:
-                print_status('SUCCESS', row[0], row[1])
+def rfid(fb, fs):
+    try:
+        log.info("Starting RFID Process")
+        while True:
+            fob_id, _ = reader.read()
+            if fob_id in fobs.keys():
+                log_status('UNLOCK', fob_id, fobs.get(fob_id))
                 fb.set_locked(False)
                 unlock()
                 fb.set_locked(True)
             else:
-                print_status('ERROR', fob_id, 'Unkown ID')
-                sys.stdout.flush()
+                row = fs.getByID(str(fob_id))
+                if row:
+                    log_status('UNLOCK', row[0], row[1])
+                    fb.set_locked(False)
+                    unlock()
+                    fb.set_locked(True)
+                else:
+                    log_status('ERROR', fob_id, 'Unkown ID')
+    except Exception as e:
+        log.error(str(e), exec_info=True)
 
 def main():
-    start_new_thread(firebase, ())
-    start_new_thread(rfid, ())
-    while True
-        sleep(10)
+    log.info("Starting Main Process")
+    fb = FirebaseDoor()
+    fs = sheets.FOBSheet()
+    start_new_thread(firebase, (fb,))
+    start_new_thread(rfid, (fb, fs,))
+
+    while True:
+        try:
+            sleep(10)
+        except Exception as e:
+            log.error(e)
 
 if __name__== "__main__":
     killer = GracefulKiller()
     try:
+        gpio_init()
         main()
     except KeyboardInterrupt:
         pass
+    except Exception as e:
+        log.error(str(e), exec_info=True)
+
     finally:
         cleanup()
         sys.exit(0)

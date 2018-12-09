@@ -1,22 +1,26 @@
 from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import initialize_app
-from time import sleep
 
-cred = credentials.Certificate("door-firebase.json")
-initialize_app(cred)
+class FirebaseDoor():
 
-frontdoor = firestore.client().collection('frontdoor')
+    door = None
 
-def get_locked():
-    return frontdoor.document('status').get().to_dict().get('locked')
+    def __init__(self, door='frontdoor'):
+        self.door = door
+        cred = credentials.Certificate("/opt/door/door-firebase.json")
+        initialize_app(cred)
+        self.door = firestore.client().collection(self.door)
 
-def set_locked(s):
-    frontdoor.document('action').set({'locked': s}) 
+    def get_locked(self):
+        return self.door.document('status').get().to_dict().get('locked')
 
-def get_unlock(u):
-    return frontdoor.document('action').get().to_dict().get('unlock')
+    def set_locked(self, state):
+        self.door.document('status').set({'locked': state}) 
 
-def set_unlock(u):
-    frontdoor.document('action').set({'unlock': u}) 
+    def get_unlock(self):
+        return self.door.document('action').get().to_dict().get('unlock')
+
+    def set_unlock(self, state):
+        self.door.document('action').set({'unlock': state}) 
 
