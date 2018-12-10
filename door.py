@@ -80,7 +80,7 @@ def firebase(fb):
                 fb.set_locked(False)
                 unlock()
                 fb.set_locked(True)
-            sleep(5)
+            sleep(2)
     except Exception as e:
         log.error(str(e), exec_info=True)
 
