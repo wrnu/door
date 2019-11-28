@@ -2,6 +2,7 @@
 
 import MFRC522
 import RPi.GPIO as GPIO
+from time import sleep
   
 class SimpleMFRC522:
 
@@ -14,15 +15,17 @@ class SimpleMFRC522:
     self.READER = MFRC522.MFRC522()
   
   def read(self):
-      id, text = self.read_no_block()        
-      while not id:
-          id, text = self.read_no_block()  
-      return id, text
+    id, text = self.read_no_block()        
+    while not id:
+      id, text = self.read_no_block()  
+      sleep(0.1)
+    return id, text
 
   def read_id(self):
     id, text = self.read_no_block()        
     while not id:
-      id, text = self.read_no_block()  
+      id, text = self.read_no_block() 
+      sleep(0.1)
     return id
 
   def read_id_no_block(self):

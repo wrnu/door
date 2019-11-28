@@ -25,15 +25,27 @@ UNLOCK  = 0
 HUE_IP  ='192.168.1.103'
 
 fobs = {
-    437722577338:   "Blue Fob",
-    584188564421:   "Kevin's Visa",
-    412213325151:   "Dylan's Debit",
-    549014381766:   "Aaron's Visa",
-    683219655431:   "Joe's ScotiaCard",
+#    560550765198:   "Black fob, Warren",
+#    584186562352:   "Jeff",
+    584208683538:   "Franzi",
+#    821866116699:   "Pat",
+#    584187199478:   "Takumi",
+#    584191065136:   "Jeff's Compass Card",
+    822367609801:   "Kevin's Visa",
+#    688640897525:   "Will Wristband",
+#    622105997585:   "Warren Wristband",
+#    484060901810:   "Green Writstband",
+    437722577338:   "Jeff's Blue Fob",
+#    412213325151:   "Dylan's Debit",
+#    549014381766:   "Aaron's Visa",
+#    683219655431:   "Joe's ScotiaCard",
     584189237183:   "Jolie's Compass Card",
-    584191278450:   "Georgie's Compass Card",
-    584191717940:   "Will's Compass Card",
-    584186620377:   "Warren's Compass Card"
+#    584191278450:   "Georgie's Compass Card",
+    584186620377:   "Warren's Compass Card",
+#    903303881209:   "Jeff's green fob",
+    317517418344:   "Jeff's orange fob",
+    354665997279:   "Nida's white fob",
+    935462075277:   "Will's Blue fob"
 }
 
 reader = SimpleMFRC522.SimpleMFRC522()
@@ -80,9 +92,9 @@ def firebase(fb):
                 fb.set_locked(False)
                 unlock()
                 fb.set_locked(True)
-            sleep(2)
+            sleep(5)
     except Exception as e:
-        log.error(str(e), exec_info=True)
+        log.error(str(e))
 
 def rfid(fb, fs):
     try:
@@ -91,33 +103,37 @@ def rfid(fb, fs):
             fob_id, _ = reader.read()
             if fob_id in fobs.keys():
                 log_status('UNLOCK', fob_id, fobs.get(fob_id))
-                fb.set_locked(False)
+                #fb.set_locked(False)
                 unlock()
-                fb.set_locked(True)
+                #fb.set_locked(True)
+#            else:
+#                row = fs.getByID(str(fob_id))
+#                if row:
+#                    log_status('UNLOCK', row[0], row[1])
+#                    fb.set_locked(False)
+#                    unlock()
+#                    fb.set_locked(True)
             else:
-                row = fs.getByID(str(fob_id))
-                if row:
-                    log_status('UNLOCK', row[0], row[1])
-                    fb.set_locked(False)
-                    unlock()
-                    fb.set_locked(True)
-                else:
-                    log_status('ERROR', fob_id, 'Unkown ID')
+                log_status('ERROR', fob_id, 'Unkown ID')
+
+            sleep(0.5)
     except Exception as e:
-        log.error(str(e), exec_info=True)
+        log.error(str(e))
 
 def main():
     log.info("Starting Main Process")
-    fb = FirebaseDoor()
-    fs = sheets.FOBSheet()
-    start_new_thread(firebase, (fb,))
-    start_new_thread(rfid, (fb, fs,))
+    #fb = FirebaseDoor()
+    fb = []
+    #fs = sheets.FOBSheet()
+    fs = []
+    #start_new_thread(firebase, (fb,))
+    #start_new_thread(rfid, (fb, fs,))
 
     while True:
         try:
-            sleep(10)
+            rfid(fb, fs)
         except Exception as e:
-            log.error(e)
+            log.error(str(e))
 
 if __name__== "__main__":
     killer = GracefulKiller()
@@ -127,7 +143,7 @@ if __name__== "__main__":
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        log.error(str(e), exec_info=True)
+        log.error(str(e))
 
     finally:
         cleanup()
