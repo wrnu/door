@@ -2,7 +2,6 @@
 
 import hue
 import sys
-import sheets
 import signal
 import RPi.GPIO as GPIO
 import SimpleMFRC522
@@ -11,7 +10,6 @@ import traceback
 from time import sleep
 from datetime import datetime as dt
 from thread import start_new_thread
-from fb import FirebaseDoor
 
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
@@ -82,37 +80,14 @@ def cleanup():
 def log_status(status, fob_id, fob_desc):
     log.warning("{}: {} - {}".format(status, fob_id, fob_desc))
 
-def firebase(fb):
-    try:
-        log.info("Starting Firebase Process")
-        while True:
-            if fb.get_unlock():
-                log_status("UNLOCK", "Firebase action", "USER_ID")
-                fb.set_unlock(False)
-                fb.set_locked(False)
-                unlock()
-                fb.set_locked(True)
-            sleep(5)
-    except Exception as e:
-        log.error(str(e))
-
-def rfid(fb, fs):
+def rfid():
     try:
         log.info("Starting RFID Process")
         while True:
             fob_id, _ = reader.read()
             if fob_id in fobs.keys():
                 log_status('UNLOCK', fob_id, fobs.get(fob_id))
-                #fb.set_locked(False)
                 unlock()
-                #fb.set_locked(True)
-#            else:
-#                row = fs.getByID(str(fob_id))
-#                if row:
-#                    log_status('UNLOCK', row[0], row[1])
-#                    fb.set_locked(False)
-#                    unlock()
-#                    fb.set_locked(True)
             else:
                 log_status('ERROR', fob_id, 'Unkown ID')
 
@@ -122,16 +97,10 @@ def rfid(fb, fs):
 
 def main():
     log.info("Starting Main Process")
-    #fb = FirebaseDoor()
-    fb = []
-    #fs = sheets.FOBSheet()
-    fs = []
-    #start_new_thread(firebase, (fb,))
-    #start_new_thread(rfid, (fb, fs,))
 
     while True:
         try:
-            rfid(fb, fs)
+            rfid()
         except Exception as e:
             log.error(str(e))
 
